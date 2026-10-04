@@ -17,6 +17,14 @@ from score_analysis.services.grade_scale import GradeBand, GradeScale, GradeScal
 from score_analysis.services.weighted_score import Component, WeightedResult, WeightedScoreService
 from score_analysis.services.paper_generator import GeneratedPaper, PaperGenerator, PaperSpec
 from score_analysis.services.histogram import HistogramBin, HistogramService
+from score_analysis.services.standard_score import StandardScore, StandardScoreService
+from score_analysis.services.regression import LinearRegressionService, RegressionResult
+from score_analysis.services.correlation import CorrelationMatrix, CorrelationService
+from score_analysis.services.ranking_service import RankResult, RankingService
+from score_analysis.services.report_builder import FullReport, ReportBuilder
+from score_analysis.services.consistency import ConsistencyIssue, ConsistencyResult, ConsistencyService
+from score_analysis.services.paper_structure import PaperStructureService, StructureSummary
+from score_analysis.services.exporter import Exporter
 
 __all__ = [
     "DescriptiveStats",
@@ -53,4 +61,20 @@ __all__ = [
     "GeneratedPaper",
     "HistogramBin",
     "HistogramService",
+    "StandardScore",
+    "StandardScoreService",
+    "LinearRegressionService",
+    "RegressionResult",
+    "CorrelationMatrix",
+    "CorrelationService",
+    "RankResult",
+    "RankingService",
+    "FullReport",
+    "ReportBuilder",
+    "ConsistencyIssue",
+    "ConsistencyResult",
+    "ConsistencyService",
+    "PaperStructureService",
+    "StructureSummary",
+    "Exporter",
 ]
