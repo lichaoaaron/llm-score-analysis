@@ -13,6 +13,10 @@ from score_analysis.services.importer import ImportResult, ScoreImporter
 from score_analysis.services.normality import NormalityResult, NormalityService
 from score_analysis.services.group_analysis import GroupAnalysisService, GroupSummary
 from score_analysis.services.trend_analysis import TrendAnalysisService, TrendPoint, TrendReport
+from score_analysis.services.grade_scale import GradeBand, GradeScale, GradeScaleService
+from score_analysis.services.weighted_score import Component, WeightedResult, WeightedScoreService
+from score_analysis.services.paper_generator import GeneratedPaper, PaperGenerator, PaperSpec
+from score_analysis.services.histogram import HistogramBin, HistogramService
 
 __all__ = [
     "DescriptiveStats",
@@ -38,4 +42,15 @@ __all__ = [
     "TrendAnalysisService",
     "TrendPoint",
     "TrendReport",
+    "GradeBand",
+    "GradeScale",
+    "GradeScaleService",
+    "Component",
+    "WeightedResult",
+    "WeightedScoreService",
+    "PaperGenerator",
+    "PaperSpec",
+    "GeneratedPaper",
+    "HistogramBin",
+    "HistogramService",
 ]
