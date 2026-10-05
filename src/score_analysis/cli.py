@@ -25,6 +25,8 @@ from score_analysis.services.ranking_service import RankingService
 from score_analysis.services.report_service import ReportService
 from score_analysis.services.score_cleaner import ScoreCleaner
 from score_analysis.services.standard_score import StandardScoreService
+from score_analysis.services.exporter import Exporter
+from score_analysis.services.report_builder import ReportBuilder
 
 
 def _build_llm(config):
@@ -121,6 +123,25 @@ def cmd_standard(args, config) -> None:
     _print_json(output)
 
 
+def cmd_full_report(args, config) -> None:
+    scores = _load(args.data)
+    engine = AnalysisEngine(config, _build_llm(config))
+    report = ReportBuilder(config, engine).build("成绩统计分析与试卷质量评估报告", scores)
+    _print_json(report.to_dict())
+
+
+def cmd_export(args, config) -> None:
+    scores = _load(args.data)
+    engine = AnalysisEngine(config, _build_llm(config))
+    report = ReportBuilder(config, engine).build("成绩统计分析与试卷质量评估报告", scores)
+    payload = report.to_dict()
+    if not args.output:
+        print("请通过 --output 指定输出文件路径", file=sys.stderr)
+        sys.exit(1)
+    Exporter().export(payload, Path(args.output), fmt=args.format)
+    print(f"已导出到 {args.output}")
+
+
 def main(argv: List[str] | None = None) -> None:
     config = load_config()
     parser = argparse.ArgumentParser(prog="score-analysis", description="成绩统计分析与试卷质量评估系统")
@@ -142,6 +163,13 @@ def main(argv: List[str] | None = None) -> None:
     report = sub.add_parser("report", help="导出报告")
     report.add_argument("--format", choices=["json", "csv", "markdown", "html"], default="json")
     report.set_defaults(func=cmd_report)
+
+    sub.add_parser("full-report", help="综合报表").set_defaults(func=cmd_full_report)
+
+    export = sub.add_parser("export", help="导出报告到文件")
+    export.add_argument("--format", choices=["json", "csv", "markdown", "html"], default="json")
+    export.add_argument("--output", required=True, help="输出文件路径")
+    export.set_defaults(func=cmd_export)
 
     args = parser.parse_args(argv)
     args.func(args, config)

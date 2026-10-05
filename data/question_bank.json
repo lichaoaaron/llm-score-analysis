@@ -1,0 +1,12 @@
+{
+  "bank_id": "BANK-DS-001",
+  "subject": "数据结构",
+  "questions": [
+    {"question_id": "Q001", "content": "下列哪种数据结构是先进后出的？", "question_type": "选择题", "difficulty": 0.3, "knowledge_point": "栈与队列", "full_score": 2, "tags": ["基础"]},
+    {"question_id": "Q002", "content": "二叉树的先序遍历序列为 ABDECF，中序为 DBEAFC，求后序", "question_type": "选择题", "difficulty": 0.5, "knowledge_point": "二叉树", "full_score": 2, "tags": ["基础"]},
+    {"question_id": "Q003", "content": "简述哈希冲突的两种解决方法", "question_type": "简答题", "difficulty": 0.4, "knowledge_point": "哈希表", "full_score": 5, "tags": ["基础"]},
+    {"question_id": "Q004", "content": "给定一组关键字，构造二叉排序树", "question_type": "简答题", "difficulty": 0.6, "knowledge_point": "二叉排序树", "full_score": 8, "tags": ["应用"]},
+    {"question_id": "Q005", "content": "用 Dijkstra 算法求单源最短路径", "question_type": "计算题", "difficulty": 0.7, "knowledge_point": "图的最短路径", "full_score": 12, "tags": ["应用"]},
+    {"question_id": "Q006", "content": "分析快速排序的平均时间复杂度并证明", "question_type": "综合题", "difficulty": 0.8, "knowledge_point": "排序", "full_score": 15, "tags": ["提高"]}
+  ]
+}
