@@ -17,8 +17,14 @@ from score_analysis.config import load_config
 from score_analysis.data_loader import load_scores
 from score_analysis.models.score import StudentScore
 from score_analysis.services.analysis_engine import AnalysisEngine
+from score_analysis.services.grade_scale import GradeScaleService
+from score_analysis.services.histogram import HistogramService
 from score_analysis.services.llm_client import MockLLMClient, OpenAICompatibleClient
+from score_analysis.services.normality import NormalityService
+from score_analysis.services.ranking_service import RankingService
 from score_analysis.services.report_service import ReportService
+from score_analysis.services.score_cleaner import ScoreCleaner
+from score_analysis.services.standard_score import StandardScoreService
 
 
 def _build_llm(config):
@@ -69,6 +75,52 @@ def cmd_report(args, config) -> None:
         _print_json(payload)
 
 
+def cmd_clean(args, config) -> None:
+    scores = _load(args.data)
+    result = ScoreCleaner(config).clean([s.score for s in scores])
+    _print_json(result.to_dict())
+
+
+def cmd_grade(args, config) -> None:
+    scores = _load(args.data)
+    service = GradeScaleService()
+    output = [
+        {"student_id": s.student_id, "name": s.name, "score": s.score,
+         "grade": service.grade(s.score), "gpa": service.gpa(s.score)}
+        for s in scores
+    ]
+    _print_json(output)
+
+
+def cmd_rank(args, config) -> None:
+    scores = _load(args.data)
+    results = RankingService(GradeScaleService()).rank(
+        [(s.student_id, s.name, s.score) for s in scores]
+    )
+    _print_json([r.to_dict() for r in results])
+
+
+def cmd_normal(args, config) -> None:
+    scores = _load(args.data)
+    result = NormalityService().test([s.score for s in scores])
+    _print_json(result.to_dict())
+
+
+def cmd_histogram(args, config) -> None:
+    scores = _load(args.data)
+    bins = HistogramService().build([s.score for s in scores], bin_width=args.bin_width)
+    _print_json([b.to_dict() for b in bins])
+
+
+def cmd_standard(args, config) -> None:
+    scores = _load(args.data)
+    values = [s.score for s in scores]
+    service = StandardScoreService()
+    service.fit(values)
+    output = [service.convert(s.score).to_dict() for s in scores]
+    _print_json(output)
+
+
 def main(argv: List[str] | None = None) -> None:
     config = load_config()
     parser = argparse.ArgumentParser(prog="score-analysis", description="成绩统计分析与试卷质量评估系统")
@@ -77,6 +129,15 @@ def main(argv: List[str] | None = None) -> None:
 
     sub.add_parser("stats", help="描述统计与分布").set_defaults(func=cmd_stats)
     sub.add_parser("quality", help="试卷质量评估").set_defaults(func=cmd_quality)
+    sub.add_parser("clean", help="成绩清洗").set_defaults(func=cmd_clean)
+    sub.add_parser("grade", help="等级与绩点").set_defaults(func=cmd_grade)
+    sub.add_parser("rank", help="成绩排名").set_defaults(func=cmd_rank)
+    sub.add_parser("normal", help="正态性检验").set_defaults(func=cmd_normal)
+    sub.add_parser("standard", help="标准分换算").set_defaults(func=cmd_standard)
+
+    histogram = sub.add_parser("histogram", help="成绩直方图分箱")
+    histogram.add_argument("--bin-width", type=float, default=10.0, help="分箱宽度")
+    histogram.set_defaults(func=cmd_histogram)
 
     report = sub.add_parser("report", help="导出报告")
     report.add_argument("--format", choices=["json", "csv", "markdown", "html"], default="json")
