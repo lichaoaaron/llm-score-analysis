@@ -8,6 +8,11 @@ from score_analysis.services.item_analysis import ItemAnalysisService, PaperQual
 from score_analysis.services.report_service import ReportService
 from score_analysis.services.llm_client import LLMClient, MockLLMClient, OpenAICompatibleClient
 from score_analysis.services.analysis_engine import AnalysisEngine, ScoreReport
+from score_analysis.services.score_cleaner import CleaningReport, CleaningResult, ScoreCleaner
+from score_analysis.services.importer import ImportResult, ScoreImporter
+from score_analysis.services.normality import NormalityResult, NormalityService
+from score_analysis.services.group_analysis import GroupAnalysisService, GroupSummary
+from score_analysis.services.trend_analysis import TrendAnalysisService, TrendPoint, TrendReport
 
 __all__ = [
     "DescriptiveStats",
@@ -21,4 +26,16 @@ __all__ = [
     "OpenAICompatibleClient",
     "AnalysisEngine",
     "ScoreReport",
+    "ScoreCleaner",
+    "CleaningReport",
+    "CleaningResult",
+    "ScoreImporter",
+    "ImportResult",
+    "NormalityService",
+    "NormalityResult",
+    "GroupAnalysisService",
+    "GroupSummary",
+    "TrendAnalysisService",
+    "TrendPoint",
+    "TrendReport",
 ]
