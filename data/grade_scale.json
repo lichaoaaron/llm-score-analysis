@@ -1,0 +1,7 @@
+[
+  {"name": "优秀", "min_score": 90, "max_score": 100, "gpa": 4.0},
+  {"name": "良好", "min_score": 80, "max_score": 89.99, "gpa": 3.0},
+  {"name": "中等", "min_score": 70, "max_score": 79.99, "gpa": 2.0},
+  {"name": "及格", "min_score": 60, "max_score": 69.99, "gpa": 1.0},
+  {"name": "不及格", "min_score": 0, "max_score": 59.99, "gpa": 0.0}
+]

@@ -25,6 +25,7 @@ from score_analysis.services.report_builder import FullReport, ReportBuilder
 from score_analysis.services.consistency import ConsistencyIssue, ConsistencyResult, ConsistencyService
 from score_analysis.services.paper_structure import PaperStructureService, StructureSummary
 from score_analysis.services.exporter import Exporter
+from score_analysis.services.dedup import DedupResult, DedupService
 
 __all__ = [
     "DescriptiveStats",
@@ -77,4 +78,6 @@ __all__ = [
     "PaperStructureService",
     "StructureSummary",
     "Exporter",
+    "DedupResult",
+    "DedupService",
 ]
