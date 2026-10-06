@@ -1,0 +1,7 @@
+[
+  {"question_id": "Q1", "content": "选择题", "question_type": "选择题", "full_score": 20},
+  {"question_id": "Q2", "content": "填空题", "question_type": "填空题", "full_score": 20},
+  {"question_id": "Q3", "content": "简答题", "question_type": "简答题", "full_score": 30},
+  {"question_id": "Q4", "content": "计算题", "question_type": "计算题", "full_score": 20},
+  {"question_id": "Q5", "content": "综合题", "question_type": "综合题", "full_score": 10}
+]
