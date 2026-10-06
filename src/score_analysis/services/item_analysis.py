@@ -41,11 +41,7 @@ class ItemAnalysisService:
     def __init__(self, config: AppConfig) -> None:
         self.config = config
 
-    def paper_quality(
-        self,
-        total_scores: Sequence[float],
-        item_matrix: List[Sequence[float]],
-    ) -> PaperQuality:
+    def paper_quality(self, total_scores: Sequence[float], questions: List[Question]) -> PaperQuality:
         """整张试卷质量：难度 = 平均分/满分，信度 = Cronbach's α。"""
         n = len(total_scores)
         if n == 0:
@@ -53,13 +49,19 @@ class ItemAnalysisService:
 
         avg = mean(total_scores)
         difficulty = avg / self.config.full_score if self.config.full_score else 0.0
-        reliability = cronbach_alpha(item_matrix) if item_matrix else 0.0
 
-        discriminations = [self._discrimination(item, total_scores) for item in item_matrix]
+        item_matrix = [q.item_scores for q in questions if q.item_scores]
+        reliability = cronbach_alpha(item_matrix) if len(item_matrix) >= 2 else 0.0
+
+        discriminations = [
+            self._discrimination(q.item_scores, total_scores, q.full_score)
+            for q in questions
+            if q.item_scores
+        ]
         avg_discrimination = mean(discriminations) if discriminations else 0.0
 
         return PaperQuality(
-            question_count=len(item_matrix),
+            question_count=len(questions),
             full_score=self.config.full_score,
             avg_score=avg,
             difficulty=min(1.0, max(0.0, difficulty)),
@@ -67,11 +69,7 @@ class ItemAnalysisService:
             avg_discrimination=avg_discrimination,
         )
 
-    def analyze_questions(
-        self,
-        questions: List[Question],
-        total_scores: Sequence[float],
-    ) -> List[QuestionStat]:
+    def analyze_questions(self, questions: List[Question], total_scores: Sequence[float]) -> List[QuestionStat]:
         """逐题分析：难度、区分度、质量等级。"""
         result: List[QuestionStat] = []
         for q in questions:
@@ -79,7 +77,7 @@ class ItemAnalysisService:
                 continue
             mean_score = mean(q.item_scores)
             difficulty = mean_score / q.full_score if q.full_score else 0.0
-            discrimination = self._discrimination(q.item_scores, total_scores)
+            discrimination = self._discrimination(q.item_scores, total_scores, q.full_score)
             result.append(
                 QuestionStat(
                     question_id=q.question_id,
@@ -93,10 +91,10 @@ class ItemAnalysisService:
             )
         return result
 
-    def _discrimination(self, item_scores: Sequence[float], total_scores: Sequence[float]) -> float:
-        """区分度：高低分组法（前 27% 与后 27%）。"""
+    def _discrimination(self, item_scores: Sequence[float], total_scores: Sequence[float], item_full_score: float) -> float:
+        """区分度：高低分组法（前 27% 与后 27%），除以该题满分。"""
         n = len(total_scores)
-        if n < 4:
+        if n < 4 or item_full_score == 0:
             return 0.0
         ratio = self.config.group_ratio
         group_size = max(1, int(round(n * ratio)))
@@ -106,10 +104,9 @@ class ItemAnalysisService:
         low_group = order[:group_size]
         high_group = order[-group_size:]
 
-        full = self.config.full_score
         high_mean = mean([item_scores[i] for i in high_group])
         low_mean = mean([item_scores[i] for i in low_group])
-        return (high_mean - low_mean) / full if full else 0.0
+        return (high_mean - low_mean) / item_full_score
 
     @staticmethod
     def _quality(difficulty: float, discrimination: float) -> str:

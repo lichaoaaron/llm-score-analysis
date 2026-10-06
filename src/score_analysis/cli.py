@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import List
 
 from score_analysis.config import load_config
-from score_analysis.data_loader import load_scores
+from score_analysis.data_loader import fill_item_scores, load_questions, load_scores
 from score_analysis.models.score import StudentScore
 from score_analysis.services.analysis_engine import AnalysisEngine
 from score_analysis.services.grade_scale import GradeScaleService
@@ -54,7 +54,11 @@ def cmd_stats(args, config) -> None:
 
 def cmd_quality(args, config) -> None:
     scores = _load(args.data)
-    report = AnalysisEngine(config, _build_llm(config)).run(scores)
+    questions_path = args.questions or config.data_dir / "questions.json"
+    questions = load_questions(Path(questions_path)) if Path(questions_path).exists() else None
+    if questions:
+        fill_item_scores(questions, scores)
+    report = AnalysisEngine(config, _build_llm(config)).run(scores, questions)
     _print_json({"paper_quality": report.paper_quality, "question_stats": report.question_stats})
 
 
@@ -149,7 +153,9 @@ def main(argv: List[str] | None = None) -> None:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("stats", help="描述统计与分布").set_defaults(func=cmd_stats)
-    sub.add_parser("quality", help="试卷质量评估").set_defaults(func=cmd_quality)
+    quality = sub.add_parser("quality", help="试卷质量评估")
+    quality.add_argument("--questions", help="试卷题目结构 JSON 路径（默认 data/questions.json）")
+    quality.set_defaults(func=cmd_quality)
     sub.add_parser("clean", help="成绩清洗").set_defaults(func=cmd_clean)
     sub.add_parser("grade", help="等级与绩点").set_defaults(func=cmd_grade)
     sub.add_parser("rank", help="成绩排名").set_defaults(func=cmd_rank)

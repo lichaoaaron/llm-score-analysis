@@ -56,15 +56,8 @@ class AnalysisEngine:
         stats = distribution.stats
 
         total_scores = values
-        item_matrix: List[List[float]] = []
-        if questions:
-            item_matrix = [q.item_scores for q in questions]
-        elif scores and scores[0].item_scores:
-            # 从分项得分构造逐题矩阵（对齐题目顺序）。
-            item_names = list(scores[0].item_scores.keys())
-            item_matrix = [[s.item_scores.get(name, 0.0) for s in scores] for name in item_names]
 
-        paper_quality = self.item_analysis.paper_quality(total_scores, item_matrix)
+        paper_quality = self.item_analysis.paper_quality(total_scores, questions or [])
         question_stats = (
             self.item_analysis.analyze_questions(questions, total_scores) if questions else []
         )
