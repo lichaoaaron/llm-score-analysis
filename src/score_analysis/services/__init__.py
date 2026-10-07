@@ -26,6 +26,22 @@ from score_analysis.services.consistency import ConsistencyIssue, ConsistencyRes
 from score_analysis.services.paper_structure import PaperStructureService, StructureSummary
 from score_analysis.services.exporter import Exporter
 from score_analysis.services.dedup import DedupResult, DedupService
+from score_analysis.services.hypothesis_testing import (
+    AnovaResult,
+    ChiSquareResult,
+    HypothesisTestingService,
+    TTestResult,
+)
+from score_analysis.services.effect_size import EffectSizeResult, EffectSizeService
+from score_analysis.services.percentile_rank import PercentileRankResult, PercentileRankService
+from score_analysis.services.learning_objectives import LearningObjectivesService, ObjectiveResult
+from score_analysis.services.progress_tracking import (
+    ProgressResult,
+    ProgressSummary,
+    ProgressTrackingService,
+)
+from score_analysis.services.fairness import FairnessResult, FairnessService
+from score_analysis.services.forecast import ForecastResult, ForecastService
 
 __all__ = [
     "DescriptiveStats",
