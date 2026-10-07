@@ -12,6 +12,19 @@ from score_analysis.utils.statistics import (
     stddev,
     variance,
 )
+from score_analysis.utils.distributions import (
+    beta_inc,
+    chi2_cdf,
+    chi2_p_value,
+    f_cdf,
+    f_p_value,
+    gamma,
+    gamma_inc,
+    log_gamma,
+    normal_cdf,
+    t_cdf,
+    t_p_value,
+)
 
 __all__ = [
     "cronbach_alpha",
@@ -25,4 +38,15 @@ __all__ = [
     "skewness",
     "stddev",
     "variance",
+    "beta_inc",
+    "chi2_cdf",
+    "chi2_p_value",
+    "f_cdf",
+    "f_p_value",
+    "gamma",
+    "gamma_inc",
+    "log_gamma",
+    "normal_cdf",
+    "t_cdf",
+    "t_p_value",
 ]

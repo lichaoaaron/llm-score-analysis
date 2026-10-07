@@ -27,6 +27,9 @@ from score_analysis.services.score_cleaner import ScoreCleaner
 from score_analysis.services.standard_score import StandardScoreService
 from score_analysis.services.exporter import Exporter
 from score_analysis.services.report_builder import ReportBuilder
+from score_analysis.services.hypothesis_testing import HypothesisTestingService
+from score_analysis.services.progress_tracking import ProgressTrackingService
+from score_analysis.services.forecast import ForecastService
 
 
 def _build_llm(config):
@@ -146,6 +149,50 @@ def cmd_export(args, config) -> None:
     print(f"已导出到 {args.output}")
 
 
+def _load_score_list(path: Path) -> List[float]:
+    """从 JSON 文件加载一组分数（支持 [85, 90, ...] 或 [{...\"score\": 85}, ...]）。"""
+    if not path.exists():
+        print(f"数据文件不存在：{path}", file=sys.stderr)
+        sys.exit(1)
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(raw, list):
+        return [float(x) if isinstance(x, (int, float)) else float(x["score"]) for x in raw]
+    return [float(v) for v in raw.get("scores", [])]
+
+
+def cmd_ttest(args, config) -> None:
+    a = _load_score_list(Path(args.group_a))
+    b = _load_score_list(Path(args.group_b))
+    result = HypothesisTestingService().independent_t_test(a, b, alpha=args.alpha)
+    _print_json(result.to_dict())
+
+
+def cmd_anova(args, config) -> None:
+    groups = [_load_score_list(Path(p)) for p in args.groups]
+    result = HypothesisTestingService().one_way_anova(groups, alpha=args.alpha)
+    _print_json(result.to_dict())
+
+
+def cmd_progress(args, config) -> None:
+    pre = _load_score_list(Path(args.pre))
+    post = _load_score_list(Path(args.post))
+    ids = [str(i + 1) for i in range(len(pre))]
+    names = [f"学生{i + 1}" for i in range(len(pre))]
+    results, summary = ProgressTrackingService().compare(pre, post, ids, names)
+    _print_json({"summary": summary.to_dict(), "details": [r.to_dict() for r in results]})
+
+
+def cmd_forecast(args, config) -> None:
+    scores = _load(args.data)
+    history: dict = {}
+    names: dict = {}
+    for s in scores:
+        history.setdefault(s.student_id, []).append(s.score)
+        names[s.student_id] = s.name
+    results = ForecastService().predict_next(history, names)
+    _print_json([r.to_dict() for r in results])
+
+
 def main(argv: List[str] | None = None) -> None:
     config = load_config()
     parser = argparse.ArgumentParser(prog="score-analysis", description="成绩统计分析与试卷质量评估系统")
@@ -176,6 +223,24 @@ def main(argv: List[str] | None = None) -> None:
     export.add_argument("--format", choices=["json", "csv", "markdown", "html"], default="json")
     export.add_argument("--output", required=True, help="输出文件路径")
     export.set_defaults(func=cmd_export)
+
+    ttest = sub.add_parser("ttest", help="两组成绩独立样本 t 检验")
+    ttest.add_argument("--group-a", required=True, help="第一组成绩 JSON 文件")
+    ttest.add_argument("--group-b", required=True, help="第二组成绩 JSON 文件")
+    ttest.add_argument("--alpha", type=float, default=0.05, help="显著性水平")
+    ttest.set_defaults(func=cmd_ttest)
+
+    anova = sub.add_parser("anova", help="多组成绩方差分析")
+    anova.add_argument("--groups", nargs="+", required=True, help="多组成绩 JSON 文件（空格分隔）")
+    anova.add_argument("--alpha", type=float, default=0.05, help="显著性水平")
+    anova.set_defaults(func=cmd_anova)
+
+    progress = sub.add_parser("progress", help="前后测进步追踪")
+    progress.add_argument("--pre", required=True, help="前测成绩 JSON 文件")
+    progress.add_argument("--post", required=True, help="后测成绩 JSON 文件")
+    progress.set_defaults(func=cmd_progress)
+
+    sub.add_parser("forecast", help="成绩趋势预测").set_defaults(func=cmd_forecast)
 
     args = parser.parse_args(argv)
     args.func(args, config)
