@@ -25,6 +25,7 @@ from score_analysis.services.ranking_service import RankingService
 from score_analysis.services.report_service import ReportService
 from score_analysis.services.score_cleaner import ScoreCleaner
 from score_analysis.services.standard_score import StandardScoreService
+from score_analysis.services.dedup import DedupService
 from score_analysis.services.exporter import Exporter
 from score_analysis.services.report_builder import ReportBuilder
 from score_analysis.services.hypothesis_testing import HypothesisTestingService
@@ -149,15 +150,39 @@ def cmd_export(args, config) -> None:
     print(f"已导出到 {args.output}")
 
 
+def _parse_score_list(raw) -> List[float]:
+    """把 JSON 解析结果规整为一组分数。
+
+    支持 ``[85, 90, ...]``、``[{"score": 85}, ...]`` 与 ``{"scores": [...]}`` 三种写法。
+    空数据或无法解析为数值时抛出 ``ValueError``，由调用方转为友好提示。
+    """
+    if isinstance(raw, dict):
+        raw = raw.get("scores", [])
+    if not isinstance(raw, list):
+        raise ValueError("应为数组，或包含 scores 数组的对象")
+    if not raw:
+        raise ValueError("成绩数据为空，无法进行统计检验")
+
+    values: List[float] = []
+    for index, item in enumerate(raw, start=1):
+        try:
+            values.append(float(item) if isinstance(item, (int, float)) else float(item["score"]))
+        except (TypeError, KeyError, ValueError):
+            raise ValueError(f"第 {index} 条成绩无法解析为数值") from None
+    return values
+
+
 def _load_score_list(path: Path) -> List[float]:
     """从 JSON 文件加载一组分数（支持 [85, 90, ...] 或 [{...\"score\": 85}, ...]）。"""
     if not path.exists():
         print(f"数据文件不存在：{path}", file=sys.stderr)
         sys.exit(1)
     raw = json.loads(path.read_text(encoding="utf-8"))
-    if isinstance(raw, list):
-        return [float(x) if isinstance(x, (int, float)) else float(x["score"]) for x in raw]
-    return [float(v) for v in raw.get("scores", [])]
+    try:
+        return _parse_score_list(raw)
+    except ValueError as exc:
+        print(f"数据文件格式有误：{path}（{exc}）", file=sys.stderr)
+        sys.exit(1)
 
 
 def cmd_ttest(args, config) -> None:
@@ -180,6 +205,12 @@ def cmd_progress(args, config) -> None:
     names = [f"学生{i + 1}" for i in range(len(pre))]
     results, summary = ProgressTrackingService().compare(pre, post, ids, names)
     _print_json({"summary": summary.to_dict(), "details": [r.to_dict() for r in results]})
+
+
+def cmd_dedup(args, config) -> None:
+    scores = _load(args.data)
+    result = DedupService().dedup(scores, strategy=args.strategy)
+    _print_json(result.to_dict())
 
 
 def cmd_forecast(args, config) -> None:
@@ -239,6 +270,11 @@ def main(argv: List[str] | None = None) -> None:
     progress.add_argument("--pre", required=True, help="前测成绩 JSON 文件")
     progress.add_argument("--post", required=True, help="后测成绩 JSON 文件")
     progress.set_defaults(func=cmd_progress)
+
+    dedup = sub.add_parser("dedup", help="成绩记录去重")
+    dedup.add_argument("--strategy", choices=["max", "avg"], default="max",
+                       help="同一学号存在多条记录时的处理策略（默认 max 取最高分）")
+    dedup.set_defaults(func=cmd_dedup)
 
     sub.add_parser("forecast", help="成绩趋势预测").set_defaults(func=cmd_forecast)
 
